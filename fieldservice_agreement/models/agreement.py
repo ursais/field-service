@@ -1,7 +1,7 @@
 # Copyright (C) 2018 - TODAY, Open Source Integrators
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import fields, models, api
+from odoo import api, fields, models
 
 
 class Agreement(models.Model):
@@ -18,9 +18,8 @@ class Agreement(models.Model):
     @api.multi
     def _compute_service_order_count(self):
         for agreement in self:
-            res = self.env['fsm.order'].search_count(
+            agreement.service_order_count = self.env['fsm.order'].search_count(
                 [('agreement_id', '=', agreement.id)])
-            agreement.service_order_count = res or 0
 
     @api.multi
     def action_view_service_order(self):
@@ -57,13 +56,11 @@ class Agreement(models.Model):
                 [('agreement_id', '=', agreement.id)])
             action = self.env.ref(
                 'fieldservice.action_fsm_equipment').read()[0]
-            if len(equipment_ids) == 0 or len(equipment_ids) > 1:
-                action['domain'] = [('id', 'in', equipment_ids.ids)]
-            elif len(equipment_ids) == 1:
+            if len(equipment_ids) == 1:
                 action['views'] = [(
-                    self.env.ref('fieldservice.fsm_equipment_form').id,
+                    self.env.ref('fieldservice.fsm_equipment_form_view').id,
                     'form')]
                 action['res_id'] = equipment_ids.ids[0]
             else:
-                action = {'type': 'ir.actions.act_window_close'}
+                action['domain'] = [('id', 'in', equipment_ids.ids)]
             return action
