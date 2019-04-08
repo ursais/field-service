@@ -28,26 +28,20 @@ class Agreement(models.Model):
                 [('agreement_id', '=', agreement.id)])
             action = self.env.ref(
                 'fieldservice.action_fsm_operation_order').read()[0]
-            if len(fsm_order_ids) == 0 or len(fsm_order_ids) > 1:
-                action['domain'] = [('id', 'in', fsm_order_ids.ids)]
-            elif len(fsm_order_ids) == 1:
+            if len(fsm_order_ids) == 1:
                 action['views'] = [(
                     self.env.ref('fieldservice.fsm_order_form').id,
                     'form')]
                 action['res_id'] = fsm_order_ids.ids[0]
             else:
-                action = {'type': 'ir.actions.act_window_close'}
+                action['domain'] = [('id', 'in', fsm_order_ids.ids)]
             return action
 
     @api.multi
     def _compute_equipment_count(self):
-        data = self.env['fsm.equipment'].read_group(
-            [('agreement_id', 'in', self.ids)],
-            ['agreement_id'], ['agreement_id'])
-        count_data = dict((item['agreement_id'][0],
-                           item['agreement_id_count']) for item in data)
         for agreement in self:
-            agreement.equipment_count = count_data.get(agreement.id, 0)
+            agreement.equipment_count = self.env['fsm.equipment'].search_count(
+                [('agreement_id', 'in', agreement.ids)])
 
     @api.multi
     def action_view_fsm_equipment(self):
