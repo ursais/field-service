@@ -57,7 +57,7 @@ class StockRequest(models.Model):
             else:
                 values = self.prepare_order_values(vals)
                 vals['order_id'] = self.env['stock.request.order'].\
-                    create(values)
+                    create(values).id
         return super().create(vals)
 
     def _prepare_procurement_values(self, group_id=False):
