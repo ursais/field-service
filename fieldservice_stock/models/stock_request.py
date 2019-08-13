@@ -42,7 +42,8 @@ class StockRequest(models.Model):
         if 'fsm_order_id' in vals and vals['fsm_order_id']:
             fsm_order = self.env['fsm.order'].browse(vals['fsm_order_id'])
             fsm_order.request_stage = 'draft'
-            val_date = datetime.strptime(vals['expected_date'], '%Y-%m-%d %H:%M:%S')
+            val_date = datetime.strptime(vals['expected_date'],
+                                         '%Y-%m-%d %H:%M:%S')
             date_window_after = val_date - timedelta(hours=1)
             order = self.env['stock.request.order'].search([
                 ('fsm_order_id', '=', vals['fsm_order_id']),
@@ -55,7 +56,8 @@ class StockRequest(models.Model):
                 vals['order_id'] = order.id
             else:
                 values = self.prepare_order_values(vals)
-                vals['order_id'] = self.env['stock.request.order'].create(values).id
+                vals['order_id'] = self.env['stock.request.order'].\
+                    create(values)
         return super().create(vals)
 
     def _prepare_procurement_values(self, group_id=False):
