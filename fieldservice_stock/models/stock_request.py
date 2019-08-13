@@ -39,7 +39,6 @@ class StockRequest(models.Model):
 
     @api.model
     def create(self, vals):
-        res = super().create(vals)
         if 'fsm_order_id' in vals and vals['fsm_order_id']:
             fsm_order = self.env['fsm.order'].browse(vals['fsm_order_id'])
             fsm_order.request_stage = 'draft'
@@ -52,12 +51,12 @@ class StockRequest(models.Model):
                 ('state', '=', 'draft')
             ])
             if order:
-                res.expected_date = order.expected_date
-                res.order_id = order.id
+                vals['expected_date'] = order.expected_date
+                vals['order_id'] = order.id
             else:
                 values = self.prepare_order_values(vals)
-                res.order_id = self.env['stock.request.order'].create(values)
-        return res
+                vals['order_id'] = self.env['stock.request.order'].create(values).id
+        return super().create(vals)
 
     def _prepare_procurement_values(self, group_id=False):
         res = super()._prepare_procurement_values(group_id=group_id)
