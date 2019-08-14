@@ -44,7 +44,7 @@ class StockRequest(models.Model):
             fsm_order.request_stage = 'draft'
 
             val_date = vals['expected_date']
-            if not isinstace(vals['expected_date'], str):
+            if not isinstance(vals['expected_date'], str):
                 val_date = datetime.strftime(vals['expected_date'], '%Y-%m-%d %H:%M:%S')
 
             val_date = datetime.strptime(val_date, '%Y-%m-%d %H:%M:%S')
