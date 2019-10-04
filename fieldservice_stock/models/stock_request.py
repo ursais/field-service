@@ -43,9 +43,15 @@ class StockRequest(models.Model):
             fsm_order.request_stage = 'draft'
             val_date = datetime.strptime(vals['expected_date'],
                                          '%Y-%m-%d %H:%M:%S')
+            picking_type_id = self.env['stock.picking.type'].search([
+                    ('code', '=', 'stock_request_order'),
+                    ('warehouse_id', '=', vals['warehouse_id'])],
+                    limit=1).id
             date_window_after = val_date - timedelta(hours=1)
             order = self.env['stock.request.order'].search([
                 ('fsm_order_id', '=', vals['fsm_order_id']),
+                ('warehouse_id', '=', vals['warehouse_id']),
+                ('picking_type_id', '=', picking_type_id),
                 ('direction', '=', vals['direction']),
                 ('expected_date', '>', date_window_after),
                 ('state', '=', 'draft')
