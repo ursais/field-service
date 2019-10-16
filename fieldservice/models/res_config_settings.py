@@ -55,6 +55,8 @@ class ResConfigSettings(models.TransientModel):
         string='Projects and Tasks')
     module_fieldservice_crm = fields.Boolean(
         string='CRM')
+    module_fieldservice_fleet = fields.Boolean(
+        string='Link to Fleet Vehicles')
 
     # Companies
     auto_populate_persons_on_location = fields.Boolean(
