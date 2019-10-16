@@ -47,18 +47,14 @@ class FSMOrder(models.Model):
                                help="Classify and analyze your orders")
     color = fields.Integer('Color Index', default=0)
     team_id = fields.Many2one('fsm.team', string='Team',
-                              default=_default_team_id,
+                              default=lambda self: self._default_team_id(),
                               index=True, required=True,
                               track_visibility='onchange')
 
     # Request
     name = fields.Char(string='Name', required=True, index=True, copy=False,
                        default=lambda self: _('New'))
-    customer_id = fields.Many2one('res.partner', string='Contact',
-                                  domain=[('customer', '=', True)],
-                                  change_default=True,
-                                  index=True,
-                                  track_visibility='always')
+
     location_id = fields.Many2one('fsm.location', string='Location',
                                   index=True, required=True)
     location_directions = fields.Char(string='Location Directions')
@@ -100,16 +96,6 @@ class FSMOrder(models.Model):
             fsm_equipment_rec = self.env['fsm.equipment'].search([
                 ('current_location_id', '=', self.location_id.id)])
             self.equipment_ids = [(6, 0, fsm_equipment_rec.ids)]
-        if self.location_id:
-            return {'domain': {'customer_id': [('service_location_id', '=',
-                                                self.location_id.name)]}}
-        else:
-            return {'domain': {'customer_id': [('id', '!=', None)]}}
-
-    @api.onchange('customer_id')
-    def _onchange_customer_id_location(self):
-        if self.customer_id:
-            self.location_id = self.customer_id.service_location_id
 
     # Planning
     person_id = fields.Many2one('fsm.person', string='Assigned To',
@@ -176,7 +162,7 @@ class FSMOrder(models.Model):
 
     # Equipment used for all other Service Orders
     equipment_ids = fields.Many2many('fsm.equipment', string='Equipments')
-    type = fields.Selection([], string='Type')
+    type = fields.Many2one('fsm.order.type', string="Type")
 
     @api.model
     def _read_group_stage_ids(self, stages, domain, order):
@@ -220,9 +206,6 @@ class FSMOrder(models.Model):
     def write(self, vals):
         self._calc_scheduled_dates(vals)
         res = super(FSMOrder, self).write(vals)
-        for order in self:
-            if 'customer_id' not in vals and order.customer_id is False:
-                order.customer_id = order.location_id.customer_id.id
         return res
 
     def can_unlink(self):
@@ -258,52 +241,7 @@ class FSMOrder(models.Model):
                     timedelta(hours=self.scheduled_duration)
                 vals['scheduled_date_end'] = str(date_to_with_delta)
 
-    def action_confirm(self):
-        return self.write({'stage_id': self.env.ref(
-            'fieldservice.fsm_stage_confirmed').id})
-
-    def action_request(self):
-        if not self.person_ids:
-            raise ValidationError(_("Cannot move to Requested " +
-                                    "until 'Request Workers' is filled in"))
-        return self.write({'stage_id': self.env.ref(
-            'fieldservice.fsm_stage_requested').id})
-
-    def action_assign(self):
-        if self.person_id:
-            return self.write({'stage_id': self.env.ref(
-                'fieldservice.fsm_stage_assigned').id})
-        else:
-            raise ValidationError(_("Cannot move to Assigned " +
-                                    "until 'Assigned To' is filled in"))
-
-    def action_schedule(self):
-        if self.scheduled_date_start and self.person_id:
-            return self.write({'stage_id': self.env.ref(
-                'fieldservice.fsm_stage_scheduled').id})
-        else:
-            raise ValidationError(_("Cannot move to Scheduled " +
-                                    "until both 'Assigned To' and " +
-                                    "'Scheduled Start Date' are filled in"))
-
-    def action_enroute(self):
-        return self.write({'stage_id': self.env.ref(
-            'fieldservice.fsm_stage_enroute').id})
-
-    def action_start(self):
-        if not self.date_start:
-            raise ValidationError(_("Cannot move to Start " +
-                                    "until 'Actual Start' is filled in"))
-        return self.write({'stage_id': self.env.ref(
-            'fieldservice.fsm_stage_started').id})
-
     def action_complete(self):
-        if not self.date_end:
-            raise ValidationError(_("Cannot move to Complete " +
-                                    "until 'Actual End' is filled in"))
-        if not self.resolution:
-            raise ValidationError(_("Cannot move to Complete " +
-                                    "until 'Resolution' is filled in"))
         return self.write({'stage_id': self.env.ref(
             'fieldservice.fsm_stage_completed').id})
 
@@ -329,7 +267,7 @@ class FSMOrder(models.Model):
 
     def copy_notes(self):
         self.description = ""
-        if self.type not in ['repair', 'maintenance']:
+        if self.type.name not in ['repair', 'maintenance']:
             for equipment_id in self.equipment_ids:
                 if equipment_id:
                     if equipment_id.notes is not False:

@@ -8,48 +8,12 @@
         <field name="arch" type="xml">
             <form string="Order">
                 <header>
-                    <button id="action_confirm"
-                            name="action_confirm" string="Confirm"
-                            class="oe_highlight"
-                            type="object"
-                            groups="fieldservice.group_fsm_dispatcher"
-                            attrs="{'invisible': [('stage_id', '!=', %(fieldservice.fsm_stage_new)d)]}"/>
-                    <button id="action_request"
-                            name="action_request" string="Request"
-                            class="oe_highlight"
-                            type="object"
-                            groups="fieldservice.group_fsm_dispatcher"
-                            attrs="{'invisible': [('stage_id', 'not in', (%(fieldservice.fsm_stage_confirmed)d, %(fieldservice.fsm_stage_requested)d))]}"/>
-                    <button id="action_assign"
-                            name="action_assign" string="Assign"
-                            class="oe_highlight"
-                            type="object"
-                            groups="fieldservice.group_fsm_dispatcher"
-                            attrs="{'invisible': [('stage_id', 'not in', (%(fieldservice.fsm_stage_confirmed)d, %(fieldservice.fsm_stage_requested)d))]}"/>
-                    <button id="action_schedule"
-                            name="action_schedule" string="Schedule"
-                            class="oe_highlight"
-                            type="object"
-                            groups="fieldservice.group_fsm_dispatcher"
-                            attrs="{'invisible': [('stage_id', 'not in', (%(fieldservice.fsm_stage_assigned)d, %(fieldservice.fsm_stage_confirmed)d, %(fieldservice.fsm_stage_requested)d))]}"/>
-                    <button id="action_enroute"
-                            name="action_enroute" string="En Route"
-                            class="oe_highlight"
-                            type="object"
-                            groups="fieldservice.group_fsm_dispatcher"
-                            attrs="{'invisible': [('stage_id', '!=', %(fieldservice.fsm_stage_scheduled)d)]}"/>
-                    <button id="action_start"
-                            name="action_start" string="Start"
-                            class="oe_highlight"
-                            type="object"
-                            groups="fieldservice.group_fsm_dispatcher"
-                            attrs="{'invisible': [('stage_id', 'not in', (%(fieldservice.fsm_stage_scheduled)d, %(fieldservice.fsm_stage_enroute)d))]}"/>
                     <button id="action_complete"
                             name="action_complete" string="Complete"
                             class="oe_highlight"
                             type="object"
                             groups="fieldservice.group_fsm_dispatcher"
-                            attrs="{'invisible': [('stage_id', '!=', %(fieldservice.fsm_stage_started)d)]}"/>
+                            attrs="{'invisible': [('stage_id', 'in', (%(fieldservice.fsm_stage_completed)d, %(fieldservice.fsm_stage_cancelled)d))]}" />
                     <button id="action_cancel"
                             name="action_cancel" string="Cancel Order"
                             type="object"
@@ -68,7 +32,7 @@
                     </div>
                     <group>
                         <group>
-                            <field name="type"/>
+                            <field name="type"  options="{'no_create': True, 'no_open': True}"/>
                             <field name="template_id" groups="fieldservice.group_fsm_template"/>
                             <field name="priority" widget="priority"/>
                             <field name="tag_ids"
@@ -81,7 +45,6 @@
                             <field name="branch_id" invisible='1'/>
                             <field name="district_id" invisible='1'/>
                             <field name="region_id" invisible='1'/>
-                            <field name="customer_id"/>
                             <field name="team_id"
                                    groups="fieldservice.group_fsm_team"/>
                             <field name="person_id"/>
@@ -95,16 +58,16 @@
                                    groups="base.group_multi_company"/>
                         </group>
                     </group>
-                    <group string="Description">
+                    <group string="Description" name="description_grp">
                         <field name="description" nolabel="1"/>
                     </group>
-                    <group string="Resolution">
+                    <group string="Resolution" name="resolution_grp">
                         <field name="resolution" nolabel="1"/>
                     </group>
                     <notebook>
-                        <page string="Planning">
+                        <page string="Planning" name="planning_page">
                             <group>
-                                <group string="Requirements">
+                                <group string="Requirements" name="requirements_grp">
                                     <field name="category_ids"
                                            widget="many2many_tags"
                                            options="{'color_field': 'color'}"/>
@@ -112,26 +75,13 @@
                                     <field name="request_late"/>
                                 </group>
                                 <group id="schedule" string="Schedule Details">
-                                    <field name="scheduled_date_start"
-                                           style="color:Blue"
-                                           attrs="{'invisible': [('stage_id', 'in',
-                                           (%(fieldservice.fsm_stage_new)d,
-                                            %(fieldservice.fsm_stage_confirmed)d,
-                                            %(fieldservice.fsm_stage_requested)d,
-                                            %(fieldservice.fsm_stage_assigned)d))]}"/>
-                                    <field name="scheduled_date_start"
-                                           style="color:Red"
-                                           attrs="{'invisible': [('stage_id', 'in',
-                                           (%(fieldservice.fsm_stage_scheduled)d,
-                                            %(fieldservice.fsm_stage_enroute)d,
-                                            %(fieldservice.fsm_stage_started)d,
-                                            %(fieldservice.fsm_stage_completed)d))]}"/>
+                                    <field name="scheduled_date_start"/>
                                     <field name="scheduled_duration"/>
                                     <field name="scheduled_date_end"
                                            readonly="1"/>
                                 </group>
                             </group>
-                            <group string="Request Workers">
+                            <group string="Request Workers" name="request_workers">
                                 <field name="person_ids" widget="many2many"
                                        nolabel="1"
                                        context="{'search_default_location_ids': location_id}">
@@ -146,15 +96,15 @@
                                 </field>
                             </group>
                         </page>
-                        <page string="Instructions">
-                            <group string="Instructions">
+                        <page string="Instructions" name="instructions_page">
+                            <group string="Instructions" name="instructions_grp">
                                 <field name="todo" nolabel="1" widget="html"/>
                             </group>
-                            <group string="Location Directions">
+                            <group string="Location Directions" name="location_directions_grp">
                                 <field name="location_directions" nolabel="1" widget="html"/>
                             </group>
                         </page>
-                        <page string="Execution">
+                        <page string="Execution" name="execution_page">
                             <group>
                                 <group id="execution-left">
                                     <field name="date_start"/>
@@ -166,6 +116,7 @@
                         </page>
                         <page string="Equipments"
                               groups="fieldservice.group_fsm_equipment"
+                              name="equipements_page"
                               attrs="{'invisible': [('type', 'in', ['repair', 'maintenance'])]}">
                             <field name="equipment_ids"
                                    attrs="{'required': [('type', 'not in', ['repair', 'maintenance'])]}"
@@ -197,18 +148,9 @@
         <field name="name">fsm.order.tree</field>
         <field name="model">fsm.order</field>
         <field name="arch" type="xml">
-            <tree string="Orders" default_order="scheduled_date_start"
-                  decoration-danger="stage_id in (%(fieldservice.fsm_stage_new)d,
-                                                  %(fieldservice.fsm_stage_confirmed)d,
-                                                  %(fieldservice.fsm_stage_requested)d,
-                                                  %(fieldservice.fsm_stage_assigned)d)"
-                  decoration-info="stage_id in (%(fieldservice.fsm_stage_scheduled)d,
-                                                %(fieldservice.fsm_stage_enroute)d,
-                                                %(fieldservice.fsm_stage_started)d,
-                                                %(fieldservice.fsm_stage_completed)d)">
+            <tree name="orders" string="Orders" default_order="scheduled_date_start">
                 <field name="scheduled_date_start"/>
                 <field name="name"/>
-                <field name="customer_id"/>
                 <field name="location_id"/>
                 <field name="person_id"/>
                 <field name="stage_id" string="Stage"/>
@@ -240,7 +182,6 @@
                        options='{"group_by_tooltip": {"legend_priority": "Use of stars"}}'/>
                 <field name="name"/>
                 <field name="priority"/>
-                <field name="customer_id"/>
                 <field name="location_id"/>
                 <field name="person_id"/>
                 <field name="color"/>
@@ -280,11 +221,6 @@
                                     <field name="tag_ids"
                                            widget="many2many_tags"
                                            options="{'color_field': 'color'}"/>
-                                </div>
-                                <div class="text-muted o_kanban_record_subtitle">
-                                    <span t-if="record.customer_id.value">
-                                        <t t-esc="record.customer_id.value"/>
-                                    </span>
                                 </div>
                                 <div>
                                     <field name="location_id"/>
@@ -358,9 +294,6 @@
                         domain="[('stage_id.is_closed', '=', True)]"
                         name="done"/>
                 <separator/>
-                <filter string="Past Due Orders"
-                        domain="[('stage_id.name', 'not in', ['Started', 'Completed', 'Cancelled']), ('scheduled_date_start', '&lt;', current_date)]"
-                        name="past_due"/>
                 <filter string="Today Orders"
                         domain="[('scheduled_date_start','&gt;=',context_today().strftime('%%Y-%%m-%%d 00:00:00')), ('scheduled_date_start','&lt;=',context_today().strftime('%%Y-%%m-%%d 23:59:59'))]"
                         name="order_today"/>
@@ -417,7 +350,6 @@
                 <field name="stage_id"/>
                 <field name="location_id"/>
                 <field name="phone"/>
-                <field name="customer_id"/>
                 <field name="person_id"/>
                 <field name="person_phone"/>
                 <field name="city"/>

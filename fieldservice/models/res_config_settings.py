@@ -55,6 +55,8 @@ class ResConfigSettings(models.TransientModel):
         string='Projects and Tasks')
     module_fieldservice_location_builder = fields.Boolean(
         string='User FSM Location Builder')
+    module_fieldservice_crm = fields.Boolean(
+        string='CRM')
 
     # Companies
     auto_populate_persons_on_location = fields.Boolean(
