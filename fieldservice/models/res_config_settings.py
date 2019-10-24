@@ -53,6 +53,8 @@ class ResConfigSettings(models.TransientModel):
         string='Manage Recurring Orders')
     module_fieldservice_project = fields.Boolean(
         string='Projects and Tasks')
+    module_fieldservice_location_builder = fields.Boolean(
+        string='User FSM Location Builder')
     module_fieldservice_crm = fields.Boolean(
         string='CRM')
 
