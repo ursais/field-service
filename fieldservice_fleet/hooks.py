@@ -24,7 +24,7 @@ def post_init_hook(cr, registry):
         # Create a Fleet vehicle for each existing FSM vehicle
         for vehicle in vehicles:
             new = fleet.create({
-                'model_id': model.id
+                'model_id': model.id,
                 'driver_id': vehicle.person_id.id or False,
                 'is_fsm_vehicle': True,
             })
