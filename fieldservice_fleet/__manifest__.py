@@ -28,5 +28,6 @@
         'max3903',
         'brian10048',
     ],
+    'post_init_hook': 'post_init_hook',
     'installable': True,
 }
