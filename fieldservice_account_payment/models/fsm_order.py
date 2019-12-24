@@ -28,5 +28,5 @@ class FSMOrder(models.Model):
             action['views'] = \
                 [(self.env.ref('account.view_account_payment_form').id,
                   'form')]
-            action['res_id'] = self.payment_ids[0]
+            action['res_id'] = self.payment_ids[0].id
         return action
