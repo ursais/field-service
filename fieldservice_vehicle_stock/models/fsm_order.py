@@ -17,11 +17,9 @@ class FSMOrder(models.Model):
             if vals.get('vehicle_id', False):
                 vehicle_id = self.env['fsm.vehicle'].browse(vals.get('vehicle_id'))
                 if vehicle_id.inventory_location_id:
-                    for sr_id in order.stock_request_ids:
-                        if sr_id.request_stage in ['draft', 'submitted']: 
-                            for move_id in sr_id.move_ids:
-                                for move_line_id in move_id.move_line_ids:
-                                    # Replace the "Vehicle / Storage" location on the stock move lines
+                    for picking_id in picking_ids:
+                        if picking_id.state not in ['done', 'cancel']:
+                            picking_id.fsm_vehicle_id = vehicle_id
         return res
 
     @api.model
@@ -30,11 +28,9 @@ class FSMOrder(models.Model):
         if vals.get('vehicle_id', False):
             vehicle_id = self.env['fsm.vehicle'].browse(vals.get('vehicle_id'))
             if vehicle_id.inventory_location_id:
-                for sr_id in self.stock_request_ids:
-                    if sr_id.request_stage in ['draft', 'submitted']: 
-                        for move_id in sr_id.move_ids:
-                            for move_line_id in move_id.move_line_ids:
-                                # Replace the "Vehicle / Storage" location on the stock move lines
+                for picking_id in self.picking_ids:
+                    if picking_id.state not in ['done', 'cancel']:
+                        picking_id.fsm_vehicle_id = vehicle_id
         return res
 
     @api.depends('fsm_route_id', 'person_id')
