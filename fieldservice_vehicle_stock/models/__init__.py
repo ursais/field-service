@@ -4,4 +4,5 @@
 from . import (
     fsm_vehicle,
     stock_request,
+    fsm_order
 )
