@@ -75,7 +75,7 @@ class FSMOrder(models.Model):
 
     location_id = fields.Many2one('fsm.location', string='Location',
                                   index=True, required=True)
-    location_directions = fields.Char(string='Location Directions')
+    location_directions = fields.Char(string='Location Directions', translate=True)
     request_early = fields.Datetime(string='Earliest Request Date',
                                     default=datetime.now())
     color = fields.Integer('Color Index')
@@ -126,7 +126,7 @@ class FSMOrder(models.Model):
                                            ' hours')
     scheduled_date_end = fields.Datetime(string="Scheduled End")
     sequence = fields.Integer(string='Sequence', default=10)
-    todo = fields.Text(string='Instructions')
+    todo = fields.Text(string='Instructions', translate=True)
 
     # Execution
     resolution = fields.Text(string='Resolution',
