@@ -4,7 +4,7 @@
 from datetime import datetime, timedelta
 from odoo import api, fields, models, _
 from . import fsm_stage
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 
 
 class FSMOrder(models.Model):
@@ -223,8 +223,16 @@ class FSMOrder(models.Model):
                     from_string(vals.get('request_early')) + timedelta(hours=8)
         return super(FSMOrder, self).create(vals)
 
+    is_button = fields.Boolean(default=False)
+
     @api.multi
     def write(self, vals):
+        if vals.get('stage_id', False) and vals.get('is_button', False):
+            vals['is_button'] = False
+        else:
+            stage_id = self.env['fsm.stage'].browse(vals.get('stage_id'))
+            if stage_id == self.env.ref('fieldservice.fsm_stage_completed'):
+                raise UserError(_('Cannot move to completed from Kanban'))
         self._calc_scheduled_dates(vals)
         res = super(FSMOrder, self).write(vals)
         return res
@@ -281,7 +289,7 @@ class FSMOrder(models.Model):
 
     def action_complete(self):
         return self.write({'stage_id': self.env.ref(
-            'fieldservice.fsm_stage_completed').id})
+            'fieldservice.fsm_stage_completed').id, 'is_button': True})
 
     def action_cancel(self):
         return self.write({'stage_id': self.env.ref(
@@ -304,7 +312,9 @@ class FSMOrder(models.Model):
             self.scheduled_date_end = str(date_to_with_delta)
 
     def copy_notes(self):
+        old_desc = self.description
         self.description = ""
+        self.location_directions = ""
         if self.type and self.type.name not in ['repair', 'maintenance']:
             for equipment_id in self.equipment_ids:
                 if equipment_id:
@@ -324,17 +334,18 @@ class FSMOrder(models.Model):
                         self.description = (self.equipment_id.notes + '\n ')
         if self.location_id:
             s = self.location_id.direction
+            self.location_directions
             if s is not False and s != '<p><br></p>':
                 s = s.replace('<p>', '')
                 s = s.replace('<br>', '')
                 s = s.replace('</p>', '\n')
-                if self.location_directions is not False:
-                    self.location_directions = (self.location_directions +
-                                                '\n' + s + '\n')
-                else:
-                    self.location_directions = (s + '\n ')
+                self.location_directions = (s + '\n ')
         if self.template_id:
-            self.todo = self.template_id.instructions
+            self.todo += self.template_id.instructions
+        if self.description:
+            self.description = '\n' + old_desc
+        else:
+            self.description = old_desc
 
     @api.onchange('location_id')
     def onchange_location_id(self):
@@ -355,8 +366,13 @@ class FSMOrder(models.Model):
             self.category_ids = self.template_id.category_ids
             self.scheduled_duration = self.template_id.hours
             self.copy_notes()
-            self.type = self.template_id.type_id
+            if not self.type:
+                self.type = self.template_id.type_id
             self.team_id = self.template_id.team_id
+
+    @api.onchange('stage_id')
+    def _onchange_stage_id(self):
+        self.is_button = True
 
 
 class FSMTeam(models.Model):
