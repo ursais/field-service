@@ -370,10 +370,6 @@ class FSMOrder(models.Model):
                 self.type = self.template_id.type_id
             self.team_id = self.template_id.team_id
 
-    @api.onchange('stage_id')
-    def _onchange_stage_id(self):
-        self.is_button = True
-
 
 class FSMTeam(models.Model):
     _inherit = 'fsm.team'
