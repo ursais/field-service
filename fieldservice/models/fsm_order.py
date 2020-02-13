@@ -318,34 +318,35 @@ class FSMOrder(models.Model):
         if self.type and self.type.name not in ['repair', 'maintenance']:
             for equipment_id in self.equipment_ids:
                 if equipment_id:
-                    if equipment_id.notes is not False:
-                        if self.description is not False:
+                    if equipment_id.notes:
+                        if self.description:
                             self.description = (self.description +
                                                 equipment_id.notes + '\n ')
                         else:
                             self.description = (equipment_id.notes + '\n ')
         else:
             if self.equipment_id:
-                if self.equipment_id.notes is not False:
-                    if self.description is not False:
+                if self.equipment_id.notes:
+                    if self.description:
                         self.description = (self.description +
                                             self.equipment_id.notes + '\n ')
                     else:
                         self.description = (self.equipment_id.notes + '\n ')
         if self.location_id:
             s = self.location_id.direction
-            self.location_directions
-            if s is not False and s != '<p><br></p>':
+            if s and s != '<p><br></p>':
                 s = s.replace('<p>', '')
                 s = s.replace('<br>', '')
                 s = s.replace('</p>', '\n')
                 self.location_directions = (s + '\n ')
         if self.template_id:
-            self.todo += self.template_id.instructions
+            if self.template_id.instructions:
+                self.todo += self.template_id.instructions
         if self.description:
-            self.description = '\n' + old_desc
+            self.description += '\n' + old_desc
         else:
             self.description = old_desc
+
 
     @api.onchange('location_id')
     def onchange_location_id(self):
