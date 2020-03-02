@@ -35,6 +35,8 @@ class FSMWizard(models.TransientModel):
         }
 
     def action_convert_location(self, partner):
+        if isinstance(partner, int):
+            partner = self.env['res.partner'].browse(partner)
         res = self.env['fsm.location'].search_count(
             [('partner_id', '=', partner.id)])
         if res == 0:
@@ -47,6 +49,8 @@ class FSMWizard(models.TransientModel):
                               ' partner already exists.'))
 
     def action_convert_person(self, partner):
+        if isinstance(partner, int):
+            partner = self.env['res.partner'].browse(partner)
         res = self.env['fsm.person'].search_count(
             [('partner_id', '=', partner.id)])
         if res == 0:
