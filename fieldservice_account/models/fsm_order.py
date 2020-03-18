@@ -12,6 +12,40 @@ class FSMOrder(models.Model):
     invoice_count = fields.Integer(
         string='Invoice Count',
         compute='_compute_account_invoice_count', readonly=True)
+    customer_id = fields.Many2one('res.partner', string='Contact',
+                                  domain=[('customer', '=', True)],
+                                  change_default=True,
+                                  index=True,
+                                  track_visibility='always')
+
+    @api.onchange('location_id', 'customer_id')
+    def _onchange_location_id_customer_account(self):
+        if self.env.user.company_id.fsm_filter_location_by_contact:
+            if self.location_id:
+                return {'domain': {'customer_id': [('service_location_id', '=',
+                                                    self.location_id.id)]}}
+            else:
+                return {'domain': {'customer_id': [],
+                                   'location_id': []}}
+        else:
+            if self.customer_id:
+                return {'domain': {'location_id': [('partner_id', '=',
+                                                    self.customer_id.id)]}}
+            else:
+                return {'domain': {'location_id': [],
+                                   'customer_id': []}}
+
+    @api.onchange('customer_id')
+    def _onchange_customer_id_location(self):
+        if self.customer_id:
+            self.location_id = self.customer_id.service_location_id
+
+    @api.multi
+    def write(self, vals):
+        for order in self:
+            if 'customer_id' not in vals and order.customer_id is False:
+                vals.update({'customer_id': order.location_id.customer_id.id})
+            return super(FSMOrder, self).write(vals)
 
     @api.depends('invoice_ids')
     def _compute_account_invoice_count(self):
