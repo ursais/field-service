@@ -100,19 +100,30 @@ class FSMRouteDayRoute(models.Model):
     def check_day(self):
         for rec in self:
             if rec.date and rec.route_id:
-                # Get the day of the week: Monday -> 0, Sunday -> 6
-                day_index = rec.date.weekday()
-                day = self.env.ref(
-                    'fieldservice_route.fsm_route_day_' + str(day_index))
-                if day.id not in rec.route_id.day_ids.ids:
+                run_day = rec.route_id.run_on(rec.date)
+                if not run_day:
                     raise ValidationError(_(
                         "The route %s does not run on %s!" %
-                        (rec.route_id.name, day.name)))
+                        (rec.route_id.name, run_day.name)))
 
     @api.constrains('route_id', 'max_order', 'order_count')
     def check_capacity(self):
         for rec in self:
-            if rec.route_id and rec.order_count > rec.max_order:
+            if rec.max_order and rec.order_count > rec.max_order:
                 raise ValidationError(_(
                     "The day route is exceeding the maximum number of "
                     "orders of the route."))
+
+    @api.constrains('route_id', 'date')
+    def check_max_dayroute(self):
+        for rec in self:
+            if rec.route_id:
+                # TODO: use a single read_group instead of a loop repeatd search
+                dayroutes = self.search([
+                    ('route_id', '=', rec.route_id.id),
+                    ('date', '=', rec.date),
+                ])
+                if len(dayroutes) > rec.route_id.max_dayroute:
+                    raise ValidationError(_(
+                        "This route only runs %s time(s) a day." %
+                        rec.route_id.max_dayroute))
