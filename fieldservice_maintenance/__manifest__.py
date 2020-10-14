@@ -8,7 +8,7 @@
     "category": "Field Service",
     "author": "Open Source Integrators, Odoo Community Association (OCA)",
     "website": "https://github.com/OCA/field-service",
-    "depends": ["fieldservice", "maintenance",],
+    "depends": ["fieldservice", "maintenance"],
     "data": [
         "data/fsm_order_type.xml",
         "views/maintenance_equipment_view.xml",
@@ -19,6 +19,6 @@
     "pre_init_hook": "pre_init_hook",
     "license": "AGPL-3",
     "development_status": "Beta",
-    "maintainers": ["smangukiya", "max3903", "bodedra",],
+    "maintainers": ["smangukiya", "max3903", "bodedra"],
     "installable": True,
 }
