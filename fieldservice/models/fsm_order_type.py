@@ -10,7 +10,5 @@ class FSMOrderType(models.Model):
     name = fields.Char(string="Name")
 
     internal_type = fields.Selection(
-        string="Internal Type",
-        selection=[('fsm', 'FSM')],
-        default='fsm',
+        string="Internal Type", selection=[("fsm", "FSM")], default="fsm",
     )
