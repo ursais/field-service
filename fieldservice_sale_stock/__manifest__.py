@@ -8,10 +8,10 @@
     "category": "Field Service",
     "author": "Brian McMaster, Odoo Community Association (OCA)",
     "website": "https://github.com/OCA/field-service",
-    "depends": ["fieldservice_sale", "fieldservice_stock",],
+    "depends": ["fieldservice_sale", "fieldservice_stock"],
     "license": "AGPL-3",
     "development_status": "Beta",
-    "maintainers": ["wolfhall", "max3903", "brian10048",],
+    "maintainers": ["wolfhall", "max3903", "brian10048"],
     "installable": True,
     "auto_install": True,
 }

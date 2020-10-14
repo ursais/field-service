@@ -21,7 +21,7 @@ class SaleOrder(models.Model):
             # TODO: We may want to split the picking to have one picking
             #  per FSM order
             fsm_order = self.env["fsm.order"].search(
-                [("sale_id", "=", rec.id), ("sale_line_id", "=", False),]
+                [("sale_id", "=", rec.id), ("sale_line_id", "=", False)]
             )
             if rec.procurement_group_id:
                 rec.procurement_group_id.fsm_order_id = fsm_order.id or False
