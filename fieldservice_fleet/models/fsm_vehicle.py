@@ -10,7 +10,10 @@ class FSMVehicle(models.Model):
     _inherits = {"fleet.vehicle": "fleet_vehicle_id"}
 
     fleet_vehicle_id = fields.Many2one(
-        "fleet.vehicle", string="Vehicle Details", required=True, ondelete="restrict",
+        "fleet.vehicle",
+        string="Vehicle Details",
+        required=True,
+        ondelete="restrict",
     )
 
     _sql_constraints = [
@@ -35,7 +38,7 @@ class FSMVehicle(models.Model):
         if "driver_id" in vals:
             for vehicle in self:
                 if vehicle.is_fsm_vehicle:
-                    vehicle.set_fsm_driver()
+                    vehicle.fleet_vehicle_id.set_fsm_driver()
         # update fleet.vehicle driver based on the fsm.vehicle worker
         fsm_worker_id = vals.get("person_id", False)
         if fsm_worker_id:
