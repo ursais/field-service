@@ -1,15 +1,14 @@
 # Copyright (C) 2021 Open Source Integrators
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import models, _
+from odoo import _, models
 from odoo.exceptions import ValidationError
 
 
 class FSMOrder(models.Model):
     _inherit = "fsm.order"
 
-    def _prepare_inv_line_for_stock_request(self, stock_request,
-                                            invoice=False):
+    def _prepare_inv_line_for_stock_request(self, stock_request, invoice=False):
         accounts = stock_request.product_id.product_tmpl_id.get_product_accounts()
         account = accounts["income"]
         vals = {
@@ -25,8 +24,7 @@ class FSMOrder(models.Model):
 
     def _create_inv_line_for_stock_requests(self, invoice=False):
         for stock_request in self.stock_request_ids:
-            vals = self._prepare_inv_line_for_stock_request(stock_request,
-                                                            invoice)
+            vals = self._prepare_inv_line_for_stock_request(stock_request, invoice)
             self.env["account.move.line"].create(vals)
 
     def account_create_invoice(self):
@@ -38,8 +36,9 @@ class FSMOrder(models.Model):
     def account_no_invoice(self):
         res = super().account_no_invoice()
         if (
-                self.stock_request_ids and
-                self.location_id.inventory_location_id.usage == "customer"):
+            self.stock_request_ids
+            and self.location_id.inventory_location_id.usage == "customer"
+        ):
             jrnl = self.env["account.journal"].search(
                 [
                     ("company_id", "=", self.env.user.company_id.id),
