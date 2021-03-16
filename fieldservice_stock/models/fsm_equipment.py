@@ -15,7 +15,7 @@ class FSMEquipment(models.Model):
         'stock.location', string='Current Inventory Location',
         compute='_compute_current_stock_loc_id')
 
-    @api.depends('product_id', 'lot_id')
+    @api.multi
     def _compute_current_stock_loc_id(self):
         for equipment in self:
             quants = self.env['stock.quant'].search(
@@ -26,11 +26,6 @@ class FSMEquipment(models.Model):
                     quants.location_id.id
             else:
                 equipment.current_stock_location_id = False
-
-    @api.onchange('product_id')
-    def _onchange_product(self):
-        for equipment in self:
-            self.current_stock_location_id = False
 
     @api.model
     def create(self, vals):
