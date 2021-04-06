@@ -30,7 +30,9 @@ class FSMOrder(models.Model):
         action['res_id'] = order.id
         return action
 
-    @api.onchange('team_id')
+     @api.onchange('team_id')
     def onchange_team_id(self):
-        if self.team_id:
-            self.project_id = self.team_id.project_id
+        #update check to see if child value is populated before populating it
+        #override dictionary value if not emply value
+         if self.team_id.project_id:
+             self.project_id = self.team_id.project_id
