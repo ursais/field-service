@@ -56,6 +56,7 @@ class SaleOrderLine(models.Model):
         self.ensure_one()
         categories = self.product_id.fsm_order_template_id.category_ids
         return {
+            "customer_id": self.order_id.partner_id.id,
             "location_id": self.order_id.fsm_location_id.id,
             "location_directions": self.order_id.fsm_location_id.direction,
             "request_early": self.order_id.expected_date,
@@ -139,7 +140,12 @@ class SaleOrderLine(models.Model):
             if rec.product_id.field_service_tracking == "line":
                 rec._field_find_fsm_order()
 
-    def _prepare_invoice_line(self, qty):
-        res = super()._prepare_invoice_line(qty)
-        res.update({"fsm_order_id": self.fsm_order_id.id})
+    def _prepare_invoice_line(self, **optional_values):
+        res = super()._prepare_invoice_line(**optional_values)
+        if self.fsm_order_id:
+            res.update(
+                {
+                    "fsm_order_ids": [(4, self.fsm_order_id.id)],
+                }
+            )
         return res

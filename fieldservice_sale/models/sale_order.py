@@ -64,7 +64,7 @@ class SaleOrder(models.Model):
         categories = self.env["fsm.category"]
         for template in templates:
             note += template.instructions or ""
-            hours += template.hours
+            hours += template.duration
             categories |= template.category_ids
         return {
             "location_id": self.fsm_location_id.id,

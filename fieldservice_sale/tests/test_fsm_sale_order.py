@@ -1,5 +1,6 @@
 # Copyright (C) 2019 Brian McMaster <brian@mcmpest.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+
 from odoo import fields
 
 from .test_fsm_sale_common import TestFSMSale
@@ -173,7 +174,11 @@ class TestFSMSaleOrder(TestFSMSale):
                 ).id,
             }
         )
-        order.write({"employee_timesheet_ids": [(6, 0, timesheet.ids)]})
+        order.write(
+            {
+                "employee_timesheet_ids": [(6, 0, timesheet.ids)],
+            }
+        )
         return order
 
     def test_sale_order_1(self):
@@ -202,12 +207,17 @@ class TestFSMSaleOrder(TestFSMSale):
         if self._isp_account_installed():
             fsm_order = self._fulfill_order(fsm_order)
         fsm_order.write(
-            {"date_end": fields.Datetime.today(), "resolution": "Work completed"}
+            {
+                "date_end": fields.Datetime.today(),
+                "resolution": "Work completed",
+            }
         )
         fsm_order.action_complete()
 
         # Invoice the order
-        invoice = self.sale_order_1._create_invoices()
+        Invoice = self.env["account.invoice"]
+        inv_id = self.sale_order_1.action_invoice_create()
+        invoice = Invoice.browse(inv_id)
         # 1 invoices created
         self.assertEqual(
             len(invoice.ids), 1, "FSM Sale: Sale Order 1 should create 1 invoice"
@@ -244,7 +254,10 @@ class TestFSMSaleOrder(TestFSMSale):
         if self._isp_account_installed():
             fsm_order = self._fulfill_order(fsm_order)
         fsm_order.write(
-            {"date_end": fields.Datetime.today(), "resolution": "Work completed"}
+            {
+                "date_end": fields.Datetime.today(),
+                "resolution": "Work completed",
+            }
         )
         fsm_order.action_complete()
         # qty delivered should be updated
@@ -254,7 +267,9 @@ class TestFSMSaleOrder(TestFSMSale):
         )
 
         # Invoice the order
-        invoice = self.sale_order_2._create_invoices()
+        Invoice = self.env["account.invoice"]
+        inv_id = self.sale_order_2.action_invoice_create()
+        invoice = Invoice.browse(inv_id)
         # 1 invoice created
         self.assertEqual(
             len(invoice.ids), 1, "FSM Sale: Sale Order 2 should create 1 invoice"
@@ -297,7 +312,10 @@ class TestFSMSaleOrder(TestFSMSale):
         if self._isp_account_installed():
             fsm_order_1 = self._fulfill_order(fsm_order_1)
         fsm_order_1.write(
-            {"date_end": fields.Datetime.today(), "resolution": "Work completed"}
+            {
+                "date_end": fields.Datetime.today(),
+                "resolution": "Work completed",
+            }
         )
         fsm_order_1.action_complete()
         self.assertTrue(
@@ -307,7 +325,10 @@ class TestFSMSaleOrder(TestFSMSale):
         if self._isp_account_installed():
             fsm_order_2 = self._fulfill_order(fsm_order_2)
         fsm_order_2.write(
-            {"date_end": fields.Datetime.today(), "resolution": "Work completed"}
+            {
+                "date_end": fields.Datetime.today(),
+                "resolution": "Work completed",
+            }
         )
         fsm_order_2.action_complete()
         self.assertTrue(
@@ -316,7 +337,9 @@ class TestFSMSaleOrder(TestFSMSale):
         )
 
         # Invoice the sale order
-        invoices = self.sale_order_3._create_invoices()
+        Invoice = self.env["account.invoice"]
+        inv_id = self.sale_order_3.action_invoice_create()
+        invoices = Invoice.browse(inv_id)
         # 2 invoices created
         self.assertEqual(
             len(invoices.ids), 2, "FSM Sale: Sale Order 3 should create 2 invoices"
@@ -377,7 +400,10 @@ class TestFSMSaleOrder(TestFSMSale):
         if self._isp_account_installed():
             fsm_order_1 = self._fulfill_order(fsm_order_1)
         fsm_order_1.write(
-            {"date_end": fields.Datetime.today(), "resolution": "Work completed"}
+            {
+                "date_end": fields.Datetime.today(),
+                "resolution": "Work completed",
+            }
         )
         fsm_order_1.action_complete()
         self.assertTrue(
@@ -387,7 +413,10 @@ class TestFSMSaleOrder(TestFSMSale):
         if self._isp_account_installed():
             fsm_order_2 = self._fulfill_order(fsm_order_2)
         fsm_order_2.write(
-            {"date_end": fields.Datetime.today(), "resolution": "Work completed"}
+            {
+                "date_end": fields.Datetime.today(),
+                "resolution": "Work completed",
+            }
         )
         fsm_order_2.action_complete()
         self.assertTrue(
@@ -397,13 +426,18 @@ class TestFSMSaleOrder(TestFSMSale):
         if self._isp_account_installed():
             fsm_order_3 = self._fulfill_order(fsm_order_3)
         fsm_order_3.write(
-            {"date_end": fields.Datetime.today(), "resolution": "Work completed"}
+            {
+                "date_end": fields.Datetime.today(),
+                "resolution": "Work completed",
+            }
         )
         fsm_order_3.action_complete()
         # qty_delivered does not update for FSM orders linked only to the sale
 
         # Invoice the sale order
-        invoices = self.sale_order_4._create_invoices()
+        Invoice = self.env["account.invoice"]
+        inv_id = self.sale_order_4.action_invoice_create()
+        invoices = Invoice.browse(inv_id)
         # 3 invoices created
         self.assertEqual(
             len(invoices.ids), 3, "FSM Sale: Sale Order 4 should create 3 invoices"

@@ -1,5 +1,6 @@
 # Copyright (C) 2019 Brian McMaster <brian@mcmpest.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+
 from odoo.addons.sale.tests.test_sale_common import TestCommonSaleNoChart
 
 
