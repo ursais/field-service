@@ -36,11 +36,12 @@ class AccountPayment(models.Model):
             action["res_id"] = self.fsm_order_ids[0].id
         return action
 
-    @api.depends("move_ids.fsm_order_ids")
+    @api.depends("reconciled_invoice_ids.fsm_order_ids")
     def _compute_fsm_order_ids(self):
         fsm_order_ids = []
-        for invoice in self.move_ids:
-            if invoice.fsm_order_ids:
-                fsm_order_ids.extend(invoice.fsm_order_ids.ids)
-        if fsm_order_ids:
-            self.fsm_order_ids = [(6, 0, fsm_order_ids)]
+        for rec in self:
+            for invoice in rec.reconciled_invoice_ids:
+                if invoice.fsm_order_ids:
+                    fsm_order_ids.extend(invoice.fsm_order_ids.ids)
+            if fsm_order_ids:
+                rec.fsm_order_ids = [(6, 0, fsm_order_ids)]
