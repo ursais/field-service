@@ -14,10 +14,7 @@
         "fieldservice",
         "web_view_google_map",
     ],
-    "data": [
-        "views/fsm_order.xml",
-        "views/fsm_location.xml",
-    ],
+    "data": ["views/fsm_order.xml", "views/fsm_location.xml", "views/res_partner.xml"],
     "development_status": "Beta",
     "maintainers": [
         "wolfhall",
