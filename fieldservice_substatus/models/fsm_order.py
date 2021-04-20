@@ -1,7 +1,7 @@
 # Copyright (C) 2019 - TODAY, Open Source Integrators
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import api, fields, models
+from odoo import fields, models
 
 
 class FSMOrder(models.Model):
@@ -11,11 +11,10 @@ class FSMOrder(models.Model):
         "fsm.stage.status",
         string="Sub-Status",
         required=True,
-        track_visibility="onchange",
+        tracking=True,
         default=lambda self: self._default_stage_id().sub_stage_id,
     )
 
-    @api.multi
     def write(self, vals):
         if "stage_id" in vals:
             sub_stage_id = (
@@ -25,7 +24,6 @@ class FSMOrder(models.Model):
                 vals.update({"sub_stage_id": sub_stage_id.id})
         return super(FSMOrder, self).write(vals)
 
-    @api.multi
     def _track_subtype(self, init_values):
         self.ensure_one()
         if "sub_stage_id" in init_values:
