@@ -10,7 +10,7 @@
     "depends": [
         "fieldservice",
         "sale_management",
-        "fieldservice_account",
+        "fieldservice_account_analytic",
     ],
     "data": [
         "security/ir.model.access.csv",

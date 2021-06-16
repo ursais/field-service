@@ -65,7 +65,7 @@ class SaleOrderLine(models.Model):
             "template_id": self.product_id.fsm_order_template_id.id,
             "todo": self.product_id.fsm_order_template_id.instructions,
             "category_ids": [(6, 0, categories.ids)],
-            "scheduled_duration": self.product_id.fsm_order_template_id.hours,
+            "scheduled_duration": self.product_id.fsm_order_template_id.duration,
             "sale_id": self.order_id.id,
             "sale_line_id": self.id,
             "company_id": self.company_id.id,

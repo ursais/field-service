@@ -14,7 +14,10 @@ class TestFSMSaleOrder(TestFSMSale):
 
         # Setup products that when sold will create some FSM orders
         cls.setUpFSMProducts()
-
+        cls.partner_customer_usd = cls.env['res.partner'].search(
+            [('currency_id.name', '=', 'USD')], limit=1)
+        cls.pricelist_usd = cls.env['product.pricelist'].search(
+            [('currency_id.name', '=', 'USD')], limit=1)
         # Create some sale orders that will use the above products
         SaleOrder = cls.env["sale.order"].with_context(tracking_disable=True)
         # create a generic Sale Order with one product
@@ -215,8 +218,8 @@ class TestFSMSaleOrder(TestFSMSale):
         fsm_order.action_complete()
 
         # Invoice the order
-        Invoice = self.env["account.invoice"]
-        inv_id = self.sale_order_1.action_invoice_create()
+        Invoice = self.env["account.move"]
+        inv_id = self.sale_order_1._create_invoices()
         invoice = Invoice.browse(inv_id)
         # 1 invoices created
         self.assertEqual(
@@ -337,8 +340,8 @@ class TestFSMSaleOrder(TestFSMSale):
         )
 
         # Invoice the sale order
-        Invoice = self.env["account.invoice"]
-        inv_id = self.sale_order_3.action_invoice_create()
+        Invoice = self.env["account.move"]
+        inv_id = self.sale_order_3._create_invoices()
         invoices = Invoice.browse(inv_id)
         # 2 invoices created
         self.assertEqual(
@@ -435,8 +438,8 @@ class TestFSMSaleOrder(TestFSMSale):
         # qty_delivered does not update for FSM orders linked only to the sale
 
         # Invoice the sale order
-        Invoice = self.env["account.invoice"]
-        inv_id = self.sale_order_4.action_invoice_create()
+        Invoice = self.env["account.move"]
+        inv_id = self.sale_order_4._create_invoices()
         invoices = Invoice.browse(inv_id)
         # 3 invoices created
         self.assertEqual(
