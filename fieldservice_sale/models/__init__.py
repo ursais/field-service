@@ -6,4 +6,6 @@ from . import (
     product_template,
     sale_order_line,
     sale_order,
+    res_config_settings,
+    company,
 )

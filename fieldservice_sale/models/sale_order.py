@@ -151,6 +151,10 @@ class SaleOrder(models.Model):
         InvoiceLines = self.env["account.move.line"]
         invoice_ids = super()._create_invoices(grouped, final)
         result = invoice_ids or Invoices
+        disable_split_invoicing = self.env['ir.config_parameter'].sudo().get_param('fieldservice_sale.disable_split_invoicing')
+
+        if disable_split_invoicing:
+            return invoice_ids
 
         for invoice in invoice_ids:
             # check for invoice lines with product
