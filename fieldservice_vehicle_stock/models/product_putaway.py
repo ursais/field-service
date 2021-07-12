@@ -3,8 +3,8 @@
 from odoo import api, models
 
 
-class PutAwayStrategy(models.Model):
-    _inherit = "product.putaway"
+class StockPutawayRule(models.Model):
+    _inherit = "stock.putaway.rule"
 
     @api.model
     def _get_putaway_options(self):
