@@ -1,6 +1,6 @@
 # Copyright (C) 2018 Open Source Integrators
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 
 
 class FSMOrder(models.Model):
@@ -33,11 +33,17 @@ class FSMOrder(models.Model):
     @api.depends("invoice_lines")
     def _compute_get_invoiced(self):
         for order in self:
-            invoices = order.invoice_lines.mapped("move_id").filtered(
-                lambda r: r.move_type in ("out_invoice", "out_refund")
-            )
-            order.invoice_ids = invoices
-            order.invoice_count = len(invoices)
+            self._cr.execute("SELECT account_move_line_id FROM fsm_order_account_move_line_rel WHERE fsm_order_id = %s", tuple([order.id]))
+            move_line_ids = [i[0] for i in self._cr.fetchall()]
+            moves = False
+            if move_line_ids:
+                move_lines = self.env['account.move.line'].browse(move_line_ids)
+                moves = move_lines.mapped("move_id")
+            order.invoice_ids = moves
+            if moves:
+                order.invoice_count = len(moves)
+            else:
+                order.invoice_count = 0
 
     def action_view_invoices(self):
         action = self.env.ref("account.action_move_out_invoice_type").read()[0]
