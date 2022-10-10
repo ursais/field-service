@@ -7,10 +7,8 @@ from odoo import api, fields, models
 class FSMEquipment(models.Model):
     _inherit = "fsm.equipment"
 
-    product_id = fields.Many2one(
-        "product.product", string="Product", required=True)
-    lot_id = fields.Many2one("stock.production.lot",
-                             string="Serial #", required=True)
+    product_id = fields.Many2one("product.product", string="Product", required=True)
+    lot_id = fields.Many2one("stock.production.lot", string="Serial #", required=True)
     current_stock_location_id = fields.Many2one(
         "stock.location",
         string="Current Inventory Location",
@@ -24,8 +22,9 @@ class FSMEquipment(models.Model):
             quants = stock_quant_obj.search(
                 [("lot_id", "=", equipment.lot_id.id)], order="id desc", limit=1
             )
-            equipment.current_stock_location_id = quants.location_id and\
-                quants.location_id.id or False
+            equipment.current_stock_location_id = (
+                quants.location_id and quants.location_id.id or False
+            )
 
     @api.onchange("product_id")
     def _onchange_product(self):

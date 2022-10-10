@@ -27,7 +27,7 @@ class StockMove(models.Model):
                 and rec.product_tmpl_id.create_fsm_equipment
             ):
                 for line in rec.move_line_ids:
-                    line.lot_id.fsm_equipment_id =\
-                        fsm_equipment_obj.create(
-                            self.prepare_equipment_values(line))
+                    line.lot_id.fsm_equipment_id = fsm_equipment_obj.create(
+                        self.prepare_equipment_values(line)
+                    )
         return res
