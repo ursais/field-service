@@ -81,12 +81,13 @@ class FSMLocation(models.Model):
         for loc in self:
             if loc.fsm_parent_id:
                 if loc.ref:
-                    loc.complete_name = "{} / [{}] {}".format(
-                        loc.fsm_parent_id.complete_name, loc.ref, loc.partner_id.name
+                    loc.complete_name = (
+                        f"{loc.fsm_parent_id.complete_name} / "
+                        f"[{loc.ref}] {loc.partner_id.name}"
                     )
                 else:
-                    loc.complete_name = "{} / {}".format(
-                        loc.fsm_parent_id.complete_name, loc.partner_id.name
+                    loc.complete_name = (
+                        f"{loc.fsm_parent_id.complete_name} / {loc.partner_id.name}"
                     )
             else:
                 if loc.ref:

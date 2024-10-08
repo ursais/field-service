@@ -417,7 +417,7 @@ class FSMOrder(models.Model):
                 ]
             )
             if holidays:
-                msg = "{} is a holiday {}".format(
-                    rec.scheduled_date_start.date(), holidays[0].name
+                msg = (
+                    f"{rec.scheduled_date_start.date()} is a holiday {holidays[0].name}"
                 )
                 raise ValidationError(_(msg))
