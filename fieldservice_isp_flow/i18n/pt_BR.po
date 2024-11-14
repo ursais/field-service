@@ -1,20 +1,21 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-#	* fieldservice_isp_flow
+# 	* fieldservice_isp_flow
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 12.0\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2020-02-05 22:13+0000\n"
-"Last-Translator: Marcel Savegnago <marcel.savegnago@gmail.com>\n"
+"PO-Revision-Date: 2024-05-21 00:11+0000\n"
+"Last-Translator: Rodrigo Macedo <sottomaiormacedotec@users.noreply."
+"translation.odoo-community.org>\n"
 "Language-Team: none\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 3.10\n"
+"X-Generator: Weblate 4.17\n"
 
 #. module: fieldservice_isp_flow
 #: model_terms:ir.ui.view,arch_db:fieldservice_isp_flow.fsm_order_form
@@ -22,25 +23,25 @@ msgid "Assign"
 msgstr "Atribuir"
 
 #. module: fieldservice_isp_flow
-#: code:addons/fieldservice_isp_flow/models/fsm_order.py:27
+#: code:addons/fieldservice_isp_flow/models/fsm_order.py:0
 #, python-format
 msgid "Cannot move to Assigned until 'Assigned To' is filled in"
 msgstr "Não pode passar para Atribuído até que 'Atribuído' seja preenchido"
 
 #. module: fieldservice_isp_flow
-#: code:addons/fieldservice_isp_flow/models/fsm_order.py:52
+#: code:addons/fieldservice_isp_flow/models/fsm_order.py:0
 #, python-format
 msgid "Cannot move to Complete until 'Actual End' is filled in"
 msgstr "Não pode passar para Completado até que ‘Fim Real’ seja preenchido"
 
 #. module: fieldservice_isp_flow
-#: code:addons/fieldservice_isp_flow/models/fsm_order.py:55
+#: code:addons/fieldservice_isp_flow/models/fsm_order.py:0
 #, python-format
 msgid "Cannot move to Complete until 'Resolution' is filled in"
 msgstr "Não pode passar para Concluído até que 'Resolução' seja preenchida"
 
 #. module: fieldservice_isp_flow
-#: code:addons/fieldservice_isp_flow/models/fsm_order.py:17
+#: code:addons/fieldservice_isp_flow/models/fsm_order.py:0
 #, python-format
 msgid "Cannot move to Requested until 'Request Workers' is filled in"
 msgstr ""
@@ -48,15 +49,17 @@ msgstr ""
 "preenchido"
 
 #. module: fieldservice_isp_flow
-#: code:addons/fieldservice_isp_flow/models/fsm_order.py:35
+#: code:addons/fieldservice_isp_flow/models/fsm_order.py:0
 #, python-format
-msgid "Cannot move to Scheduled until both 'Assigned To' and 'Scheduled Start Date' are filled in"
+msgid ""
+"Cannot move to Scheduled until both 'Assigned To' and 'Scheduled Start Date' "
+"are filled in"
 msgstr ""
 "Não pode passar para Agendado até que tanto 'Atribuído' quanto 'Data de "
 "início programada' sejam preenchidos"
 
 #. module: fieldservice_isp_flow
-#: code:addons/fieldservice_isp_flow/models/fsm_order.py:45
+#: code:addons/fieldservice_isp_flow/models/fsm_order.py:0
 #, python-format
 msgid "Cannot move to Start until 'Actual Start' is filled in"
 msgstr "Não pode passar para Iniciado até que ‘Inicio Real seja preenchido"
@@ -75,6 +78,21 @@ msgstr "Em Rota"
 #: model:ir.model,name:fieldservice_isp_flow.model_fsm_order
 msgid "Field Service Order"
 msgstr "Ordem de Serviço de Campo"
+
+#. module: fieldservice_isp_flow
+#: model:ir.model.fields,field_description:fieldservice_isp_flow.field_fsm_order__id
+msgid "ID"
+msgstr "ID"
+
+#. module: fieldservice_isp_flow
+#: model:ir.model.fields,field_description:fieldservice_isp_flow.field_fsm_order____last_update
+msgid "Last Modified on"
+msgstr "Última modificação em"
+
+#. module: fieldservice_isp_flow
+#: model:ir.model.fields,field_description:fieldservice_isp_flow.field_fsm_order__display_name
+msgid "Order"
+msgstr "Pedido"
 
 #. module: fieldservice_isp_flow
 #: model_terms:ir.ui.view,arch_db:fieldservice_isp_flow.fsm_order_search_view

@@ -83,7 +83,7 @@ class FSMOrder(models.Model):
             )
         return super(FSMOrder, self).action_complete()
 
-    def create_bills(self):
+    def prepare_bills(self):
         jrnl = self.env["account.journal"].search(
             [
                 ("company_id", "=", self.env.company.id),
@@ -125,8 +125,11 @@ class FSMOrder(models.Model):
             "company_id": self.env.company.id,
             "invoice_line_ids": invoice_line_vals,
         }
-        bill = self.env["account.move"].sudo().create(vals)
-        bill._recompute_tax_lines()
+        return vals
+
+    def create_bills(self):
+        vals = self.prepare_bills()
+        self.env["account.move"].sudo().create(vals)
 
     def account_confirm(self):
         for order in self:
@@ -142,7 +145,7 @@ class FSMOrder(models.Model):
             if order.employee_timesheet_ids:
                 order.account_stage = "confirmed"
 
-    def account_create_invoice(self):
+    def account_prepare_invoice(self):
         jrnl = self.env["account.journal"].search(
             [
                 ("company_id", "=", self.env.company.id),
@@ -235,11 +238,13 @@ class FSMOrder(models.Model):
                     },
                 )
             )
-
         invoice_vals.update({"invoice_line_ids": invoice_line_vals})
+        return invoice_vals
+
+    def account_create_invoice(self):
+        invoice_vals = self.account_prepare_invoice()
         invoice = self.env["account.move"].sudo().create(invoice_vals)
 
-        invoice._recompute_tax_lines()
         self.account_stage = "invoiced"
         return invoice
 

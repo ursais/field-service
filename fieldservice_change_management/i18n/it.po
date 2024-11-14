@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 14.0\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2023-05-24 18:12+0000\n"
-"Last-Translator: Francesco Foresti <francesco.foresti@ooops404.com>\n"
+"PO-Revision-Date: 2023-10-12 09:38+0000\n"
+"Last-Translator: mymage <stefano.consolaro@mymage.it>\n"
 "Language-Team: none\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -29,7 +29,7 @@ msgstr "Azione richiesta"
 #. module: fieldservice_change_management
 #: model:ir.model.fields,field_description:fieldservice_change_management.field_change_log__active
 msgid "Active"
-msgstr "Attiva"
+msgstr "Attivo"
 
 #. module: fieldservice_change_management
 #: model:ir.model.fields,field_description:fieldservice_change_management.field_change_log__activity_ids
@@ -271,7 +271,6 @@ msgstr "Se selezionata, nuovi messaggi richiedono attenzione."
 
 #. module: fieldservice_change_management
 #: model:ir.model.fields,help:fieldservice_change_management.field_change_log__message_has_error
-#: model:ir.model.fields,help:fieldservice_change_management.field_change_log__message_has_sms_error
 msgid "If checked, some messages have a delivery error."
 msgstr "Se selezionata, alcuni messaggi hanno un errore di consegna."
 
@@ -393,7 +392,7 @@ msgstr "Riepilogo prossima attività"
 #. module: fieldservice_change_management
 #: model:ir.model.fields,field_description:fieldservice_change_management.field_change_log__activity_type_id
 msgid "Next Activity Type"
-msgstr "Tipologia prossima attività"
+msgstr "Tipo prossima attività"
 
 #. module: fieldservice_change_management
 #: model:ir.model.fields,field_description:fieldservice_change_management.field_change_log__message_needaction_counter
@@ -424,11 +423,6 @@ msgstr "Numero di messaggi non letti"
 #: model:ir.model.fields,field_description:fieldservice_change_management.field_change_log__activity_user_id
 msgid "Responsible User"
 msgstr "Utente responsabile"
-
-#. module: fieldservice_change_management
-#: model:ir.model.fields,field_description:fieldservice_change_management.field_change_log__message_has_sms_error
-msgid "SMS Delivery error"
-msgstr "Errore consegna SMS"
 
 #. module: fieldservice_change_management
 #: model:ir.model.fields,help:fieldservice_change_management.field_change_log__stage_id
@@ -469,7 +463,7 @@ msgstr ""
 #. module: fieldservice_change_management
 #: model:ir.model.constraint,message:fieldservice_change_management.constraint_change_log_tag_name_uniq
 msgid "Tag name already exists!"
-msgstr "Nome etichetta già esistente!"
+msgstr "Il nome dell'etichetta esiste già!"
 
 #. module: fieldservice_change_management
 #: model:ir.model.fields,field_description:fieldservice_change_management.field_change_log__tag_ids
@@ -542,3 +536,6 @@ msgstr "Cronologia comunicazioni sito web"
 #: model:ir.actions.act_window,name:fieldservice_change_management.change_log_tag_action
 msgid "tags"
 msgstr "etichette"
+
+#~ msgid "SMS Delivery error"
+#~ msgstr "Errore consegna SMS"
