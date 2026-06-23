@@ -5,6 +5,8 @@
 
 from datetime import datetime
 
+from pytz import timezone, utc
+
 from odoo.tests import Form
 
 from odoo.addons.fieldservice.tests.test_fsm_common import FSMCommon
@@ -47,3 +49,61 @@ class TestFSMOrderRoute(FSMCommon):
         self.assertEqual(order.dayroute_id.person_id, order.person_id)
         self.assertEqual(order.dayroute_id.date, order.scheduled_date_start.date())
         self.assertEqual(order.dayroute_id.route_id, order.fsm_route_id)
+
+    def test_date_start_planned_uses_worker_schedule(self):
+        route_date = self.date.date()
+        calendar = self.env["resource.calendar"].create(
+            {
+                "name": "Early Shift",
+                "tz": "US/Eastern",
+                "attendance_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "name": "Shift",
+                            "dayofweek": str(route_date.weekday()),
+                            "hour_from": 6.0,
+                            "hour_to": 14.0,
+                            "day_period": "morning",
+                        },
+                    )
+                ],
+            }
+        )
+        self.test_person.partner_id.tz = "US/Eastern"
+        self.test_person.calendar_id = calendar
+        dayroute = self.env["fsm.route.dayroute"].create(
+            {
+                "route_id": self.fsm_route_id.id,
+                "date": route_date,
+            }
+        )
+        actual_local = utc.localize(dayroute.date_start_planned).astimezone(
+            timezone("US/Eastern")
+        )
+        self.assertEqual(actual_local.hour, 6)
+        self.assertEqual(actual_local.minute, 0)
+
+    def test_date_start_planned_fallback_without_calendar(self):
+        route_date = self.date.date()
+        empty_calendar = self.env["resource.calendar"].create(
+            {
+                "name": "Empty Schedule",
+                "tz": "US/Eastern",
+                "attendance_ids": [],
+            }
+        )
+        self.test_person.calendar_id = empty_calendar
+        self.test_person.partner_id.tz = "US/Eastern"
+        dayroute = self.env["fsm.route.dayroute"].create(
+            {
+                "route_id": self.fsm_route_id.id,
+                "date": route_date,
+            }
+        )
+        actual_local = utc.localize(dayroute.date_start_planned).astimezone(
+            timezone("US/Eastern")
+        )
+        self.assertEqual(actual_local.hour, 8)
+        self.assertEqual(actual_local.minute, 0)

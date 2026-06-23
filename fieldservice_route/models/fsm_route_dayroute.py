@@ -1,11 +1,13 @@
 # Copyright (C) 2019 Open Source Integrators
 # Copyright (C) 2019 Serpent consulting Services
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
-from datetime import datetime
+from datetime import datetime, time
+
+from dateutil.relativedelta import relativedelta
+from pytz import timezone, utc
 
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
-from odoo.tools import DEFAULT_SERVER_DATE_FORMAT
 
 
 class FSMRouteDayRoute(models.Model):
@@ -89,6 +91,36 @@ class FSMRouteDayRoute(models.Model):
             [("stage_type", "=", "route"), ("is_default", "=", True)], limit=1
         )
 
+    @api.model
+    def _planned_start_from_date(self, route_date, person=None, route=None):
+        """Return planned start as UTC naive datetime for the given route date."""
+        route_date = fields.Date.to_date(route_date)
+        if route and not person:
+            person = route.fsm_person_id
+        calendar = (
+            person and person.calendar_id
+        ) or self.env.company.resource_calendar_id
+        tz_name = (
+            (person and person.partner_id.tz)
+            or (calendar and calendar.tz)
+            or self.env.user.tz
+            or "UTC"
+        )
+        tzinfo = timezone(tz_name)
+        day_start = tzinfo.localize(datetime.combine(route_date, time.min))
+        day_end = day_start + relativedelta(days=1)
+        if calendar:
+            work_time = calendar._get_closest_work_time(
+                day_start,
+                match_end=False,
+                search_range=(day_start, day_end),
+                compute_leaves=False,
+            )
+            if work_time:
+                return work_time.astimezone(utc).replace(tzinfo=None)
+        fallback = tzinfo.localize(datetime.combine(route_date, time(8, 0)))
+        return fallback.astimezone(utc).replace(tzinfo=None)
+
     @api.depends("route_id", "order_ids")
     def _compute_order_count(self):
         for rec in self:
@@ -104,16 +136,25 @@ class FSMRouteDayRoute(models.Model):
 
             rec.person_id = rec.route_id.fsm_person_id
 
-    @api.depends("date")
+    @api.depends(
+        "date",
+        "person_id",
+        "person_id.calendar_id",
+        "person_id.partner_id.tz",
+        "route_id",
+        "route_id.fsm_person_id",
+        "route_id.fsm_person_id.calendar_id",
+        "route_id.fsm_person_id.partner_id.tz",
+    )
     def _compute_date_start_planned(self):
         for rec in self:
             if not rec.date:
-                rec.date_start_planned = None
+                rec.date_start_planned = False
                 continue
-
-            # TODO: Use the worker timezone and working schedule
-            rec.date_start_planned = datetime.combine(
-                rec.date, datetime.strptime("8:00:00", "%H:%M:%S").time()
+            rec.date_start_planned = rec._planned_start_from_date(
+                rec.date,
+                person=rec.person_id or rec.route_id.fsm_person_id,
+                route=rec.route_id,
             )
 
     @api.model_create_multi
@@ -123,19 +164,21 @@ class FSMRouteDayRoute(models.Model):
                 vals["name"] = self.env["ir.sequence"].next_by_code(
                     "fsm.route.dayroute"
                 ) or self.env._("New")
-            if not vals.get("date_start_planned", False) and vals.get("date", False):
-                # TODO: Use the worker timezone and working schedule
-                date = vals.get("date")
-                if isinstance(vals.get("date"), str):
-                    date = datetime.strptime(
-                        vals.get("date"), DEFAULT_SERVER_DATE_FORMAT
-                    ).date()
-                vals.update(
-                    {
-                        "date_start_planned": datetime.combine(
-                            date, datetime.strptime("8:00:00", "%H:%M:%S").time()
-                        )
-                    }
+            if not vals.get("date_start_planned") and vals.get("date"):
+                route = (
+                    self.env["fsm.route"].browse(vals["route_id"])
+                    if vals.get("route_id")
+                    else self.env["fsm.route"]
+                )
+                person = (
+                    self.env["fsm.person"].browse(vals["person_id"])
+                    if vals.get("person_id")
+                    else self.env["fsm.person"]
+                )
+                vals["date_start_planned"] = self._planned_start_from_date(
+                    vals["date"],
+                    person=person,
+                    route=route,
                 )
         return super().create(vals_list)
 
