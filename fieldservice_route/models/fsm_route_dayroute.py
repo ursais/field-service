@@ -1,9 +1,9 @@
 # Copyright (C) 2019 Open Source Integrators
 # Copyright (C) 2019 Serpent consulting Services
-# License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 from datetime import datetime
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools import DEFAULT_SERVER_DATE_FORMAT
 
@@ -12,7 +12,9 @@ class FSMRouteDayRoute(models.Model):
     _name = "fsm.route.dayroute"
     _description = "Field Service Route Dayroute"
 
-    name = fields.Char(required=True, copy=False, default=lambda self: _("New"))
+    name = fields.Char(
+        required=True, copy=False, default=lambda self: self.env._("New")
+    )
     person_id = fields.Many2one(
         comodel_name="fsm.person",
         string="Person",
@@ -80,8 +82,7 @@ class FSMRouteDayRoute(models.Model):
         )
         if teams:
             return teams
-        else:
-            raise ValidationError(_("You must create a FSM team first."))
+        raise ValidationError(self.env._("You must create a FSM team first."))
 
     def _default_stage_id(self):
         return self.env["fsm.stage"].search(
@@ -118,10 +119,10 @@ class FSMRouteDayRoute(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            if vals.get("name", _("New")) == _("New"):
+            if vals.get("name", self.env._("New")) == self.env._("New"):
                 vals["name"] = self.env["ir.sequence"].next_by_code(
                     "fsm.route.dayroute"
-                ) or _("New")
+                ) or self.env._("New")
             if not vals.get("date_start_planned", False) and vals.get("date", False):
                 # TODO: Use the worker timezone and working schedule
                 date = vals.get("date")
@@ -147,8 +148,11 @@ class FSMRouteDayRoute(models.Model):
                 day = self.env.ref("fieldservice_route.fsm_route_day_" + str(day_index))
                 if day.id not in rec.route_id.day_ids.ids:
                     raise ValidationError(
-                        _("The route %(route_name)s does not run on %(name)s!")
-                        % {"route_name": rec.route_id.name, "name": day.name}
+                        self.env._(
+                            "The route %(route_name)s does not run on %(name)s!",
+                            route_name=rec.route_id.name,
+                            name=day.name,
+                        )
                     )
 
     @api.constrains("route_id", "max_order", "order_count")
@@ -156,7 +160,7 @@ class FSMRouteDayRoute(models.Model):
         for rec in self:
             if rec.route_id and rec.order_count > rec.max_order:
                 raise ValidationError(
-                    _(
+                    self.env._(
                         "The day route is exceeding the maximum number of "
                         "orders of the route."
                     )
