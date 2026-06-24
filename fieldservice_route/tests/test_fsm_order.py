@@ -4,10 +4,12 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from datetime import datetime, timedelta
+from unittest.mock import PropertyMock, patch
 
 from pytz import timezone, utc
 
 from odoo.tests import Form
+from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 
 from odoo.addons.fieldservice.tests.test_fsm_common import FSMCommon
 
@@ -159,3 +161,159 @@ class TestFSMOrderRoute(FSMCommon):
         order.write({"scheduled_date_start": new_date})
         self.assertNotEqual(order.dayroute_id, dayroute)
         self.assertEqual(order.dayroute_id.date, new_date.date())
+
+    def test_get_dayroute_values_string_datetime(self):
+        order = self.env["fsm.order"].new({"location_id": self.test_location.id})
+        values = order._get_dayroute_values(
+            {
+                "scheduled_date_start": self.date.strftime(
+                    DEFAULT_SERVER_DATETIME_FORMAT
+                ),
+                "person_id": self.test_person.id,
+            }
+        )
+        self.assertEqual(values["date"], self.date.date())
+        self.assertEqual(values["person_id"], self.test_person.id)
+
+    def test_prepare_dayroute_values_and_domain(self):
+        order = self.env["fsm.order"].new({"location_id": self.test_location.id})
+        values = {
+            "person_id": self.test_person.id,
+            "date": self.date.date(),
+            "route_id": self.fsm_route_id.id,
+        }
+        prepared = order.prepare_dayroute_values(values)
+        self.assertEqual(prepared, values)
+        domain = order._get_dayroute_domain(values)
+        self.assertEqual(
+            domain,
+            [
+                ("person_id", "=", self.test_person.id),
+                ("date", "=", self.date.date()),
+                ("order_remaining", ">", 0),
+            ],
+        )
+        self.assertTrue(order._can_create_dayroute(values))
+        self.assertFalse(
+            order._can_create_dayroute({"person_id": False, "date": False})
+        )
+
+    def test_manage_fsm_route_skips_create_without_worker(self):
+        route = self.fsm_route_obj.create(
+            {
+                "name": "Route Without Worker",
+                "max_order": 5,
+                "day_ids": [(6, 0, self.days)],
+            }
+        )
+        location = self.env["fsm.location"].create(
+            {
+                "name": "Route Location",
+                "partner_id": self.test_loc_partner.id,
+                "owner_id": self.test_loc_partner.id,
+                "fsm_route_id": route.id,
+            }
+        )
+        order = self.env["fsm.order"].new({"location_id": location.id})
+        vals = order._manage_fsm_route({"scheduled_date_start": self.date})
+        self.assertNotIn("dayroute_id", vals)
+
+    def test_manage_fsm_route_unlinks_empty_dayroute(self):
+        order = self.env["fsm.order"].create(
+            {
+                "location_id": self.test_location.id,
+                "scheduled_date_start": self.date,
+                "person_id": self.test_person.id,
+            }
+        )
+        orphan = self.env["fsm.route.dayroute"].create(
+            {
+                "route_id": self.fsm_route_id.id,
+                "date": self.date.date(),
+            }
+        )
+        new_date = self.date + timedelta(days=7)
+        while new_date.weekday() > 4:
+            new_date += timedelta(days=1)
+        with (
+            patch.object(
+                type(order), "dayroute_id", new_callable=PropertyMock
+            ) as dayroute_mock,
+            patch.object(
+                type(orphan), "order_ids", new_callable=PropertyMock
+            ) as orders_mock,
+        ):
+            dayroute_mock.return_value = orphan
+            orders_mock.return_value = self.env["fsm.order"]
+            order._manage_fsm_route(
+                {
+                    "person_id": self.test_person.id,
+                    "scheduled_date_start": new_date,
+                }
+            )
+        self.assertFalse(orphan.exists())
+
+    def test_get_dayroute_values_from_record_scheduled_date(self):
+        order = self.env["fsm.order"].create(
+            {
+                "location_id": self.test_location.id,
+                "scheduled_date_start": self.date,
+            }
+        )
+        values = order._get_dayroute_values({})
+        self.assertEqual(values["date"], self.date.date())
+        self.assertEqual(values["route_id"], self.fsm_route_id.id)
+
+    def test_get_dayroute_values_datetime_object(self):
+        order = self.env["fsm.order"].new({"location_id": self.test_location.id})
+        values = order._get_dayroute_values(
+            {
+                "scheduled_date_start": self.date,
+                "person_id": self.test_person.id,
+                "fsm_route_id": self.fsm_route_id.id,
+            }
+        )
+        self.assertEqual(values["date"], self.date.date())
+
+    def test_create_without_dayroute_assignment(self):
+        order = self.env["fsm.order"].create(
+            {
+                "location_id": self.test_location.id,
+            }
+        )
+        self.assertFalse(order.dayroute_id)
+
+    def test_create_only_scheduled_without_person(self):
+        order = self.env["fsm.order"].create(
+            {
+                "location_id": self.test_location.id,
+                "scheduled_date_start": self.date,
+            }
+        )
+        self.assertFalse(order.dayroute_id)
+
+    def test_write_skips_route_management(self):
+        order = self.env["fsm.order"].create(
+            {
+                "location_id": self.test_location.id,
+            }
+        )
+        order.write({"description": "No route update"})
+
+    def test_order_create_multi(self):
+        orders = self.env["fsm.order"].create(
+            [
+                {
+                    "location_id": self.test_location.id,
+                    "scheduled_date_start": self.date,
+                    "person_id": self.test_person.id,
+                },
+                {
+                    "location_id": self.test_location.id,
+                    "scheduled_date_start": self.date + timedelta(hours=1),
+                    "person_id": self.test_person.id,
+                },
+            ]
+        )
+        self.assertEqual(len(orders), 2)
+        self.assertEqual(orders[0].dayroute_id, orders[1].dayroute_id)

@@ -93,13 +93,6 @@ class FSMOrder(models.Model):
 
     def write(self, vals):
         for rec in self:
-            if vals.get("route_id", False):
-                route = self.env["fsm.route"].browse(vals.get("route_id"))
-                vals.update(
-                    {
-                        "scheduled_date_start": route.date,
-                    }
-                )
             if (vals.get("person_id", False) or rec.person_id) and (
                 vals.get("scheduled_date_start", False) or rec.scheduled_date_start
             ):
