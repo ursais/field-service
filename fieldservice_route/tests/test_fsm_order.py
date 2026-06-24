@@ -3,7 +3,7 @@
 # Copyright 2022 Tecnativa - Víctor Martínez
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from pytz import timezone, utc
 
@@ -107,3 +107,55 @@ class TestFSMOrderRoute(FSMCommon):
         )
         self.assertEqual(actual_local.hour, 8)
         self.assertEqual(actual_local.minute, 0)
+
+    def test_reuse_existing_dayroute(self):
+        order1 = self.env["fsm.order"].create(
+            {
+                "location_id": self.test_location.id,
+                "scheduled_date_start": self.date,
+                "person_id": self.test_person.id,
+            }
+        )
+        order2 = self.env["fsm.order"].create(
+            {
+                "location_id": self.test_location.id,
+                "scheduled_date_start": self.date,
+                "person_id": self.test_person.id,
+            }
+        )
+        self.assertEqual(order1.dayroute_id, order2.dayroute_id)
+        self.assertEqual(order1.dayroute_id.order_count, 2)
+
+    def test_order_person_from_route(self):
+        order = self.env["fsm.order"].create(
+            {
+                "location_id": self.test_location.id,
+                "scheduled_date_start": self.date,
+            }
+        )
+        self.assertEqual(order.person_id, self.fsm_route_id.fsm_person_id)
+
+    def test_order_sets_route_from_location(self):
+        order = self.env["fsm.order"].create(
+            {
+                "location_id": self.test_location.id,
+                "scheduled_date_start": self.date,
+            }
+        )
+        self.assertEqual(order.fsm_route_id, self.test_location.fsm_route_id)
+
+    def test_order_write_scheduled_date_start(self):
+        order = self.env["fsm.order"].create(
+            {
+                "location_id": self.test_location.id,
+                "scheduled_date_start": self.date,
+                "person_id": self.test_person.id,
+            }
+        )
+        dayroute = order.dayroute_id
+        new_date = self.date + timedelta(days=1)
+        while new_date.weekday() > 4:
+            new_date += timedelta(days=1)
+        order.write({"scheduled_date_start": new_date})
+        self.assertNotEqual(order.dayroute_id, dayroute)
+        self.assertEqual(order.dayroute_id.date, new_date.date())
