@@ -24,6 +24,12 @@
         "views/fsm_order.xml",
         "views/menu.xml",
     ],
+    "demo": [
+        "demo/fsm_route.xml",
+        "demo/fsm_location.xml",
+        "demo/fsm_route_dayroute.xml",
+        "demo/fsm_order.xml",
+    ],
     "development_status": "Beta",
     "maintainers": ["max3903"],
 }
