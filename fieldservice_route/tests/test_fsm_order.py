@@ -4,7 +4,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from datetime import datetime, timedelta
-from unittest.mock import PropertyMock, patch
 
 from pytz import timezone, utc
 
@@ -86,6 +85,45 @@ class TestFSMOrderRoute(FSMCommon):
         )
         self.assertEqual(actual_local.hour, 6)
         self.assertEqual(actual_local.minute, 0)
+
+    def test_date_start_planned_recomputes_on_calendar_change(self):
+        route_date = self.date.date()
+        calendar = self.env["resource.calendar"].create(
+            {
+                "name": "Morning Shift",
+                "tz": "US/Eastern",
+                "attendance_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "name": "Shift",
+                            "dayofweek": str(route_date.weekday()),
+                            "hour_from": 7.0,
+                            "hour_to": 15.0,
+                            "day_period": "morning",
+                        },
+                    )
+                ],
+            }
+        )
+        self.test_person.partner_id.tz = "US/Eastern"
+        self.test_person.calendar_id = calendar
+        dayroute = self.env["fsm.route.dayroute"].create(
+            {
+                "route_id": self.fsm_route_id.id,
+                "date": route_date,
+            }
+        )
+        before = utc.localize(dayroute.date_start_planned).astimezone(
+            timezone("US/Eastern")
+        )
+        self.assertEqual(before.hour, 7)
+        calendar.attendance_ids.write({"hour_from": 9.0})
+        after = utc.localize(dayroute.date_start_planned).astimezone(
+            timezone("US/Eastern")
+        )
+        self.assertEqual(after.hour, 9)
 
     def test_date_start_planned_fallback_without_calendar(self):
         route_date = self.date.date()
@@ -191,6 +229,7 @@ class TestFSMOrderRoute(FSMCommon):
                 ("person_id", "=", self.test_person.id),
                 ("date", "=", self.date.date()),
                 ("order_remaining", ">", 0),
+                ("route_id", "=", self.fsm_route_id.id),
             ],
         )
         self.assertTrue(order._can_create_dayroute(values))
@@ -226,32 +265,48 @@ class TestFSMOrderRoute(FSMCommon):
                 "person_id": self.test_person.id,
             }
         )
-        orphan = self.env["fsm.route.dayroute"].create(
-            {
-                "route_id": self.fsm_route_id.id,
-                "date": self.date.date(),
-            }
-        )
+        old_dayroute = order.dayroute_id
         new_date = self.date + timedelta(days=7)
         while new_date.weekday() > 4:
             new_date += timedelta(days=1)
-        with (
-            patch.object(
-                type(order), "dayroute_id", new_callable=PropertyMock
-            ) as dayroute_mock,
-            patch.object(
-                type(orphan), "order_ids", new_callable=PropertyMock
-            ) as orders_mock,
-        ):
-            dayroute_mock.return_value = orphan
-            orders_mock.return_value = self.env["fsm.order"]
-            order._manage_fsm_route(
-                {
-                    "person_id": self.test_person.id,
-                    "scheduled_date_start": new_date,
-                }
-            )
-        self.assertFalse(orphan.exists())
+        order.write({"scheduled_date_start": new_date})
+        self.assertNotEqual(order.dayroute_id, old_dayroute)
+        self.assertFalse(old_dayroute.exists())
+
+    def test_two_routes_same_worker_same_date(self):
+        other_route = self.fsm_route_obj.create(
+            {
+                "name": "Second Demo Route",
+                "max_order": 10,
+                "fsm_person_id": self.test_person.id,
+                "day_ids": [(6, 0, self.days)],
+            }
+        )
+        other_location = self.env["fsm.location"].create(
+            {
+                "name": "Second Route Location",
+                "partner_id": self.test_loc_partner.id,
+                "owner_id": self.test_loc_partner.id,
+                "fsm_route_id": other_route.id,
+            }
+        )
+        order1 = self.env["fsm.order"].create(
+            {
+                "location_id": self.test_location.id,
+                "scheduled_date_start": self.date,
+                "person_id": self.test_person.id,
+            }
+        )
+        order2 = self.env["fsm.order"].create(
+            {
+                "location_id": other_location.id,
+                "scheduled_date_start": self.date,
+                "person_id": self.test_person.id,
+            }
+        )
+        self.assertNotEqual(order1.dayroute_id, order2.dayroute_id)
+        self.assertEqual(order1.dayroute_id.route_id, self.fsm_route_id)
+        self.assertEqual(order2.dayroute_id.route_id, other_route)
 
     def test_get_dayroute_values_from_record_scheduled_date(self):
         order = self.env["fsm.order"].create(

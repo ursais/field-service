@@ -179,6 +179,41 @@ class TestFSMRouteDayRoute(FSMCommon):
         dayroute._compute_date_start_planned()
         self.assertTrue(dayroute.date_start_planned)
 
+    def test_portal_user_sees_only_own_dayroutes(self):
+        other_person = self.env["fsm.person"].create({"name": "Other Worker"})
+        route_date = self._next_weekday(0)
+        own_dayroute = self.DayRoute.create(
+            {
+                "route_id": self.route.id,
+                "date": route_date,
+            }
+        )
+        other_route = self.Route.create(
+            {
+                "name": "Other Worker Route",
+                "max_order": 5,
+                "fsm_person_id": other_person.id,
+                "day_ids": [(6, 0, [self.monday.id])],
+            }
+        )
+        other_dayroute = self.DayRoute.create(
+            {
+                "route_id": other_route.id,
+                "date": route_date,
+            }
+        )
+        portal_user = self.env["res.users"].create(
+            {
+                "name": self.test_person.name,
+                "login": "portal_route_worker",
+                "partner_id": self.test_person.partner_id.id,
+                "group_ids": [(6, 0, [self.env.ref("base.group_portal").id])],
+            }
+        )
+        portal_dayroutes = self.DayRoute.with_user(portal_user).search([])
+        self.assertIn(own_dayroute, portal_dayroutes)
+        self.assertNotIn(other_dayroute, portal_dayroutes)
+
     def test_create_sequence_fallback(self):
         route_date = self._next_weekday(0)
         with patch.object(
