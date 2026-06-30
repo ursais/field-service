@@ -1,6 +1,6 @@
 # Copyright (C) 2019 Open Source Integrators
 # Copyright (C) 2019 Serpent consulting Services
-# License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 from datetime import datetime
 
 from odoo import api, fields, models
@@ -54,14 +54,22 @@ class FSMOrder(models.Model):
         }
 
     def _get_dayroute_domain(self, values):
-        return [
+        domain = [
             ("person_id", "=", values["person_id"]),
             ("date", "=", values["date"]),
             ("order_remaining", ">", 0),
         ]
+        if values.get("route_id"):
+            domain.append(("route_id", "=", values["route_id"]))
+        return domain
 
     def _can_create_dayroute(self, values):
         return values["person_id"] and values["date"]
+
+    def _unlink_empty_dayroutes(self, dayroutes):
+        dayroutes.filtered(
+            lambda dayroute: dayroute and not dayroute.order_ids
+        ).unlink()
 
     def _manage_fsm_route(self, vals):
         dayroute_obj = self.env["fsm.route.dayroute"]
@@ -70,14 +78,9 @@ class FSMOrder(models.Model):
         dayroute = dayroute_obj.search(domain, limit=1)
         if dayroute:
             vals.update({"dayroute_id": dayroute.id})
-        else:
-            if self._can_create_dayroute(values):
-                dayroute = dayroute_obj.create(self.prepare_dayroute_values(values))
-                vals.update({"dayroute_id": dayroute.id})
-        # If this was the last order of the dayroute,
-        # delete the dayroute
-        if self.dayroute_id and not self.dayroute_id.order_ids:
-            self.dayroute_id.unlink()
+        elif self._can_create_dayroute(values):
+            dayroute = dayroute_obj.create(self.prepare_dayroute_values(values))
+            vals.update({"dayroute_id": dayroute.id})
         return vals
 
     @api.model_create_multi
@@ -92,16 +95,13 @@ class FSMOrder(models.Model):
         return super().create(vals_list)
 
     def write(self, vals):
+        dayroutes_to_check = self.env["fsm.route.dayroute"]
         for rec in self:
-            if vals.get("route_id", False):
-                route = self.env["fsm.route"].browse(vals.get("route_id"))
-                vals.update(
-                    {
-                        "scheduled_date_start": route.date,
-                    }
-                )
             if (vals.get("person_id", False) or rec.person_id) and (
                 vals.get("scheduled_date_start", False) or rec.scheduled_date_start
             ):
+                dayroutes_to_check |= rec.dayroute_id
                 vals = rec._manage_fsm_route(vals)
-        return super().write(vals)
+        res = super().write(vals)
+        self._unlink_empty_dayroutes(dayroutes_to_check)
+        return res
